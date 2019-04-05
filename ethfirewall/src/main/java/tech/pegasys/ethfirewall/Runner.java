@@ -19,7 +19,6 @@ import tech.pegasys.ethfirewall.jsonrpcproxy.JsonRpcErrorReporter;
 import tech.pegasys.ethfirewall.jsonrpcproxy.JsonRpcHttpService;
 import tech.pegasys.ethfirewall.jsonrpcproxy.PassThroughHandler;
 import tech.pegasys.ethfirewall.jsonrpcproxy.RequestMapper;
-import tech.pegasys.ethfirewall.jsonrpcproxy.SendTransactionBodyProvider;
 import tech.pegasys.ethfirewall.jsonrpcproxy.SendTransactionHandler;
 import tech.pegasys.ethfirewall.signing.TransactionSigner;
 
@@ -32,6 +31,9 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServerOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.JsonRpc2_0Web3j;
+import org.web3j.protocol.http.HttpService;
 
 public class Runner {
 
@@ -78,12 +80,21 @@ public class Runner {
     final RequestMapper requestMapper =
         new RequestMapper(new PassThroughHandler(downStreamConnection));
 
+    final Web3j web3j =
+        new JsonRpc2_0Web3j(
+            new HttpService(
+                "http://" + clientOptions.getDefaultHost() + ":" + clientOptions.getDefaultPort()));
+
+    final NonceProvider nonceProvider =
+        new TrackingNonceProvider(web3j, transactionSigner.getAddress());
+
     requestMapper.addHandler(
         "eth_sendTransaction",
         new SendTransactionHandler(
             errorReporter,
             downStreamConnection,
-            new SendTransactionBodyProvider(transactionSigner)));
+            transactionSigner,
+            new RawTransactionConverter(nonceProvider)));
 
     requestMapper.addHandler(
         "eth_accounts",

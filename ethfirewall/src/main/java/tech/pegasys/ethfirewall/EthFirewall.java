@@ -29,9 +29,6 @@ import org.slf4j.LoggerFactory;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
-import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.JsonRpc2_0Web3j;
-import org.web3j.protocol.http.HttpService;
 
 public final class EthFirewall {
 
@@ -95,15 +92,7 @@ public final class EthFirewall {
       final File keyFile, final String password, final ChainIdProvider chain)
       throws IOException, CipherException {
     final Credentials credentials = WalletUtils.loadCredentials(password, keyFile);
-
-    final Web3j web3j =
-        new JsonRpc2_0Web3j(
-            new HttpService(
-                "http://" + config.getDownstreamHttpHost() + ":" + config.getDownstreamHttpPort()));
-
-    final NonceProvider nonceProvider = new TrackingNonceProvider(web3j, credentials.getAddress());
-
-    return new TransactionSigner(chain, credentials, new RawTransactionConverter(nonceProvider));
+    return new TransactionSigner(chain, credentials);
   }
 
   private Optional<String> readPasswordFromFile() {

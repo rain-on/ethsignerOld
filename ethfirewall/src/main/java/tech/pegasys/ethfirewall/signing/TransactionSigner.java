@@ -12,8 +12,6 @@
  */
 package tech.pegasys.ethfirewall.signing;
 
-import tech.pegasys.ethfirewall.RawTransactionConverter;
-import tech.pegasys.ethfirewall.jsonrpc.SendTransactionJsonParameters;
 import tech.pegasys.ethfirewall.signing.web3j.TransactionEncoder;
 
 import java.io.IOException;
@@ -26,15 +24,10 @@ public class TransactionSigner {
 
   private final Credentials credentials;
   private final ChainIdProvider chain;
-  private final RawTransactionConverter converter;
 
-  public TransactionSigner(
-      final ChainIdProvider chain,
-      final Credentials credentials,
-      final RawTransactionConverter converter) {
+  public TransactionSigner(final ChainIdProvider chain, final Credentials credentials) {
     this.chain = chain;
     this.credentials = credentials;
-    this.converter = converter;
   }
 
   public String getAddress() {

@@ -12,56 +12,66 @@
  */
 package tech.pegasys.ethfirewall.jsonrpcproxy;
 
+import tech.pegasys.ethfirewall.RawTransactionConverter;
 import tech.pegasys.ethfirewall.jsonrpc.JsonRpcRequest;
+import tech.pegasys.ethfirewall.jsonrpc.SendTransactionJsonParameters;
+import tech.pegasys.ethfirewall.jsonrpc.response.JsonRpcError;
+import tech.pegasys.ethfirewall.jsonrpc.response.JsonRpcErrorResponse;
+import tech.pegasys.ethfirewall.signing.TransactionSigner;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tech.pegasys.ethfirewall.jsonrpc.SendTransactionJsonParameters;
-import tech.pegasys.ethfirewall.jsonrpc.response.JsonRpcError;
-import tech.pegasys.ethfirewall.jsonrpc.response.JsonRpcErrorResponse;
 
 public class SendTransactionHandler implements JsonRpcRequestHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(SendTransactionHandler.class);
   private final JsonRpcErrorReporter errorReporter;
   private final HttpClient ethNodeClient;
-  private final BodyProvider bodyProvider;
+  private final TransactionSigner signer;
+  private final RawTransactionConverter converter;
 
   public SendTransactionHandler(
       final JsonRpcErrorReporter errorReporter,
       final HttpClient ethNodeClient,
-      final BodyProvider bodyProvider) {
+      TransactionSigner signer,
+      RawTransactionConverter converter) {
     this.errorReporter = errorReporter;
     this.ethNodeClient = ethNodeClient;
-    this.bodyProvider = bodyProvider;
+    this.signer = signer;
+    this.converter = converter;
   }
 
   @Override
-  public void handle(final HttpServerRequest httpServerRequest, final JsonRpcRequest request) {
-    final SendTransactionJsonParameters params = deserialiseParameters(request);
-
-    final SendTransactionResponseHandler sendTransactionResponseHandler =
-        new SendTransactionResponseHandler(
-            errorReporter, ethNodeClient, params, httpServerRequest, request, signer, converter);
-
-    sendTransactionResponseHandler.constructBodyAndSendRequest();
-  }
-
-  private SendTransactionJsonParameters deserialiseParameters(final JsonRpcRequest request) {
+  public void handle(final HttpServerRequest httpServerRequest, final JsonRpcRequest jsonRequest) {
+    final SendTransactionJsonParameters params;
     try {
-      return SendTransactionJsonParameters.from(request);
+      params = SendTransactionJsonParameters.from(jsonRequest);
+      final SendTransactionResponseHandler sendTransactionResponseHandler =
+          new SendTransactionResponseHandler(
+              errorReporter,
+              ethNodeClient,
+              params,
+              httpServerRequest,
+              jsonRequest,
+              signer,
+              converter);
+      sendTransactionResponseHandler.constructBodyAndSendRequest();
 
     } catch (final NumberFormatException e) {
       LOG.debug("Parsing values failed for request: {}", jsonRequest.getParams(), e);
-      errorReporter.send(jsonRequest, httpServerRequest,
-          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INVALID_PARAMS);
+      errorReporter.send(
+          jsonRequest,
+          httpServerRequest,
+          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INVALID_PARAMS));
 
     } catch (final IllegalArgumentException e) {
       LOG.debug("JSON Deserialisation failed for request: {}", jsonRequest.getParams(), e);
-      errorReporter.send(jsonRequest, httpServerRequest,
-          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INVALID_PARAMS);
+      errorReporter.send(
+          jsonRequest,
+          httpServerRequest,
+          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INVALID_PARAMS));
     }
   }
 }

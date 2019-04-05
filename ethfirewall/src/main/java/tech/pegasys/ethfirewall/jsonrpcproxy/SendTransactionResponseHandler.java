@@ -14,12 +14,14 @@ package tech.pegasys.ethfirewall.jsonrpcproxy;
 
 import static java.util.Collections.singletonList;
 
-import java.io.IOException;
-import org.web3j.crypto.RawTransaction;
 import tech.pegasys.ethfirewall.RawTransactionConverter;
 import tech.pegasys.ethfirewall.jsonrpc.JsonRpcRequest;
 import tech.pegasys.ethfirewall.jsonrpc.SendTransactionJsonParameters;
 import tech.pegasys.ethfirewall.jsonrpc.response.JsonRpcError;
+import tech.pegasys.ethfirewall.jsonrpc.response.JsonRpcErrorResponse;
+import tech.pegasys.ethfirewall.signing.TransactionSigner;
+
+import java.io.IOException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.buffer.Buffer;
@@ -31,8 +33,7 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tech.pegasys.ethfirewall.jsonrpc.response.JsonRpcErrorResponse;
-import tech.pegasys.ethfirewall.signing.TransactionSigner;
+import org.web3j.crypto.RawTransaction;
 
 public class SendTransactionResponseHandler {
 
@@ -54,7 +55,8 @@ public class SendTransactionResponseHandler {
       final SendTransactionJsonParameters params,
       final HttpServerRequest httpServerRequest,
       final JsonRpcRequest jsonRequest,
-      final TransactionSigner signer, RawTransactionConverter converter) {
+      final TransactionSigner signer,
+      RawTransactionConverter converter) {
     this.errorReporter = errorReporter;
     this.ethNodeClient = ethNodeClient;
     this.params = params;
@@ -65,35 +67,45 @@ public class SendTransactionResponseHandler {
   }
 
   void constructBodyAndSendRequest() {
-    if(!params.sender().equals(signer.getAddress())) {
+    if (!params.sender().equalsIgnoreCase(signer.getAddress())) {
       LOG.info("From address does not match unlocked account");
-      errorReporter.send(jsonRequest, httpServerRequest,
-          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INVALID_PARAMS);
+      errorReporter.send(
+          jsonRequest,
+          httpServerRequest,
+          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INVALID_PARAMS));
       return;
     }
 
+    final String signedTransactionHexString;
     try {
       final RawTransaction rawTransaction = converter.from(params); // this will populate defaults
-      final String signedTransactionHexString = signer.signTransaction(rawTransaction);
+      signedTransactionHexString = signer.signTransaction(rawTransaction);
 
     } catch (final IllegalArgumentException e) {
       LOG.debug("Bad input value from request: {}", jsonRequest, e);
-      errorReporter.send(jsonRequest, httpServerRequest,
-          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INVALID_PARAMS);
+      errorReporter.send(
+          jsonRequest,
+          httpServerRequest,
+          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INVALID_PARAMS));
+      return;
+    } catch (final IOException e) {
+      LOG.debug("Unable to determine nonce for sendTransaction: {}", jsonRequest, e);
+      errorReporter.send(
+          jsonRequest,
+          httpServerRequest,
+          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INTERNAL_ERROR));
       return;
     } catch (final Throwable e) {
       LOG.debug("Unhandled error processing request: {}", jsonRequest, e);
-      errorReporter.send(jsonRequest, httpServerRequest,
-          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INTERNAL_ERROR);
-    } catch(final IOException e) {
-      LOG.debug("Unable to determine nonce for sendTransaction: {}", jsonRequest, e);
-      errorReporter.send(jsonRequest, httpServerRequest,
-          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INTERNAL_ERROR);
+      errorReporter.send(
+          jsonRequest,
+          httpServerRequest,
+          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INTERNAL_ERROR));
+      return;
     }
 
-
-
-    final JsonRpcRequest sendRawTransaction = new JsonRpcRequest(
+    final JsonRpcRequest sendRawTransaction =
+        new JsonRpcRequest(
             JSON_RPC_VERSION, JSON_RPC_METHOD, singletonList(signedTransactionHexString));
     sendRawTransaction.setId(jsonRequest.getId());
 
@@ -108,18 +120,19 @@ public class SendTransactionResponseHandler {
 
   void handle(final HttpClientResponse response) {
     logResponse(response);
-    // If Failed, then just return it
-    if (response.statusCode() != HttpResponseStatus.OK.code()) {
-      response.bodyHandler(body -> feedbackProxyResponse(body, response));
-
+    // If a bad request, check if its a NONCE_TOO_LOW issue.
+    if (response.statusCode() == HttpResponseStatus.BAD_REQUEST.code()) {
+      response.bodyHandler(body -> handleJsonFailure(body, response));
     } else {
-      response.bodyHandler(body -> handleSuccess(body, response));
+      response.bodyHandler(body -> feedbackProxyResponse(body, response));
     }
   }
 
-  private void handleSuccess(final Buffer body, final HttpClientResponse response) {
+  private void handleJsonFailure(final Buffer body, final HttpClientResponse response) {
     final JsonObject jsonBody = new JsonObject(body);
-    if (isLowNonceError(jsonBody)) {
+    // If the nonce did not come from the initial request, and it is too low, resend with
+    // a new nonce.
+    if (isLowNonceError(jsonBody) && !params.nonce().isPresent()) {
       constructBodyAndSendRequest();
     } else {
       feedbackProxyResponse(body, response);
@@ -134,7 +147,7 @@ public class SendTransactionResponseHandler {
   }
 
   private boolean isLowNonceError(final JsonObject jsonResponseBody) {
-    if (jsonResponseBody.containsKey("error")) {
+    if (jsonResponseBody.containsKey("error") && jsonResponseBody.getValue("error") != null) {
       JsonObject errorContent = jsonResponseBody.getJsonObject("error");
       if (errorContent.getInteger("code").equals(JsonRpcError.NONCE_TOO_LOW.getCode())) {
         return true;
