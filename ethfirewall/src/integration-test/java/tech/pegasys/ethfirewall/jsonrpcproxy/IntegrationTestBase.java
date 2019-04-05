@@ -185,7 +185,7 @@ public class IntegrationTestBase {
     final File keyFile = createKeyFile();
     final Credentials credentials = WalletUtils.loadCredentials("password", keyFile);
 
-    return new TransactionSigner(chain, credentials, new RawTransactionConverter());
+    return new TransactionSigner(chain, credentials, new RawTransactionConverter(null));
   }
 
   @SuppressWarnings("UnstableApiUsage")

@@ -26,17 +26,10 @@ import org.slf4j.LoggerFactory;
 public class PassThroughHandler implements JsonRpcRequestHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(PassThroughHandler.class);
-  private final JsonRpcErrorReporter errorReporter;
   private final HttpClient ethNodeClient;
-  private final BodyProvider bodyProvider;
 
-  public PassThroughHandler(
-      final JsonRpcErrorReporter errorReporter,
-      final HttpClient ethNodeClient,
-      final BodyProvider bodyProvider) {
-    this.errorReporter = errorReporter;
+  public PassThroughHandler(final HttpClient ethNodeClient) {
     this.ethNodeClient = ethNodeClient;
-    this.bodyProvider = bodyProvider;
   }
 
   @Override
@@ -62,19 +55,9 @@ public class PassThroughHandler implements JsonRpcRequestHandler {
             });
 
     proxyRequest.headers().setAll(httpServerRequest.headers());
-    proxyRequest.headers().remove("Content-Length"); // created during 'end'.
+    proxyRequest.end(Json.encodeToBuffer(request));
     proxyRequest.setChunked(false);
-
-    final JsonRpcBody providedBody = bodyProvider.getBody(request);
-
-    if (providedBody.hasError()) {
-      errorReporter.send(request, httpServerRequest, providedBody.error());
-    } else {
-      // Data is only written to the wire on end()
-      final Buffer proxyRequestBody = providedBody.body();
-      proxyRequest.end(proxyRequestBody);
-      logRequest(request, httpServerRequest, proxyRequest, proxyRequestBody);
-    }
+    logRequest(request, httpServerRequest);
   }
 
   private void logResponse(final HttpClientResponse response) {
@@ -85,18 +68,11 @@ public class PassThroughHandler implements JsonRpcRequestHandler {
     LOG.debug("Response body: {}", body);
   }
 
-  private void logRequest(
-      final JsonRpcRequest originalJsonRpcRequest,
-      final HttpServerRequest originalRequest,
-      final HttpClientRequest proxyRequest,
-      final Buffer proxyRequestBody) {
+  private void logRequest(final JsonRpcRequest jsonRequest, final HttpServerRequest httpRequest) {
     LOG.debug(
-        "Original method: {}, uri: {}, body: {}, Proxy: method: {}, uri: {}, body: {}",
-        originalRequest.method(),
-        originalRequest.absoluteURI(),
-        Json.encodePrettily(originalJsonRpcRequest),
-        proxyRequest.method(),
-        proxyRequest.absoluteURI(),
-        proxyRequestBody);
+        "Original method: {}, uri: {}, body: {}",
+        httpRequest.method(),
+        httpRequest.absoluteURI(),
+        Json.encodePrettily(jsonRequest));
   }
 }

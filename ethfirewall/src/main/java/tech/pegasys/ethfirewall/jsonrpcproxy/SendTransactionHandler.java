@@ -1,0 +1,67 @@
+/*
+ * Copyright 2019 ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+package tech.pegasys.ethfirewall.jsonrpcproxy;
+
+import tech.pegasys.ethfirewall.jsonrpc.JsonRpcRequest;
+
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpServerRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import tech.pegasys.ethfirewall.jsonrpc.SendTransactionJsonParameters;
+import tech.pegasys.ethfirewall.jsonrpc.response.JsonRpcError;
+import tech.pegasys.ethfirewall.jsonrpc.response.JsonRpcErrorResponse;
+
+public class SendTransactionHandler implements JsonRpcRequestHandler {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SendTransactionHandler.class);
+  private final JsonRpcErrorReporter errorReporter;
+  private final HttpClient ethNodeClient;
+  private final BodyProvider bodyProvider;
+
+  public SendTransactionHandler(
+      final JsonRpcErrorReporter errorReporter,
+      final HttpClient ethNodeClient,
+      final BodyProvider bodyProvider) {
+    this.errorReporter = errorReporter;
+    this.ethNodeClient = ethNodeClient;
+    this.bodyProvider = bodyProvider;
+  }
+
+  @Override
+  public void handle(final HttpServerRequest httpServerRequest, final JsonRpcRequest request) {
+    final SendTransactionJsonParameters params = deserialiseParameters(request);
+
+    final SendTransactionResponseHandler sendTransactionResponseHandler =
+        new SendTransactionResponseHandler(
+            errorReporter, ethNodeClient, params, httpServerRequest, request, signer, converter);
+
+    sendTransactionResponseHandler.constructBodyAndSendRequest();
+  }
+
+  private SendTransactionJsonParameters deserialiseParameters(final JsonRpcRequest request) {
+    try {
+      return SendTransactionJsonParameters.from(request);
+
+    } catch (final NumberFormatException e) {
+      LOG.debug("Parsing values failed for request: {}", jsonRequest.getParams(), e);
+      errorReporter.send(jsonRequest, httpServerRequest,
+          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INVALID_PARAMS);
+
+    } catch (final IllegalArgumentException e) {
+      LOG.debug("JSON Deserialisation failed for request: {}", jsonRequest.getParams(), e);
+      errorReporter.send(jsonRequest, httpServerRequest,
+          new JsonRpcErrorResponse(jsonRequest.getId(), JsonRpcError.INVALID_PARAMS);
+    }
+  }
+}

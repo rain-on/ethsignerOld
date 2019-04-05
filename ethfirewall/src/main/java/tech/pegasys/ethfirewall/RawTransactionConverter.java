@@ -14,32 +14,46 @@ package tech.pegasys.ethfirewall;
 
 import tech.pegasys.ethfirewall.jsonrpc.SendTransactionJsonParameters;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
 import org.web3j.crypto.RawTransaction;
 
 public class RawTransactionConverter {
+  private final NonceProvider nonceProvider;
 
-  public RawTransaction from(final SendTransactionJsonParameters input) {
+  public RawTransactionConverter(NonceProvider nonceProvider) {
+    this.nonceProvider = nonceProvider;
+  }
+
+  public RawTransaction from(final SendTransactionJsonParameters input) throws IOException {
+
     return RawTransaction.createTransaction(
-        valueOrDefault(input.nonce(), null),
-        valueOrDefault(input.gasPrice(), BigInteger.ZERO),
-        valueOrDefault(input.gas(), BigInteger.valueOf(90000)),
-        valueOrDefault(input.receiver(), ""),
-        valueOrDefault(input.value(), BigInteger.ZERO),
+        valueOrDefault(input.nonce(), nonceProvider::getNonce),
+        valueOrDefault(input.gasPrice(), () -> BigInteger.ZERO),
+        valueOrDefault(input.gas(), () -> BigInteger.valueOf(90000)),
+        valueOrDefault(input.receiver(), () -> ""),
+        valueOrDefault(input.value(), () -> BigInteger.ZERO),
         input.data());
   }
 
-  private <T> T valueOrDefault(Optional<T> value, final T defaultValue) {
+  private <T> T valueOrDefault(
+      final Optional<T> value, final ThrowingSupplier<T> alternateValueSupplier)
+      throws IOException {
     if (value.isPresent()) {
       return value.get();
     }
 
-    if (defaultValue != null) {
-      return defaultValue;
+    if (alternateValueSupplier != null) {
+      return alternateValueSupplier.get();
     } else {
       throw new RuntimeException("Unable to have a default value of null.");
     }
+  }
+
+  @FunctionalInterface
+  private interface ThrowingSupplier<T> {
+    T get() throws IOException;
   }
 }
