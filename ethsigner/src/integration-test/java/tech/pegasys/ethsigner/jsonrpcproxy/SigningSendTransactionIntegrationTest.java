@@ -54,7 +54,6 @@ public class SigningSendTransactionIntegrationTest extends IntegrationTestBase {
 
   @Test
   public void internalErrorResponseWhenMissingNonce() {
-    // TODO This behaviour will change with the get nonce (PIE-1468)
     sendRequestThenVerifyResponse(
         request.ethSigner(sendTransaction.missingNonce()), response.ethSigner(INTERNAL_ERROR));
   }
