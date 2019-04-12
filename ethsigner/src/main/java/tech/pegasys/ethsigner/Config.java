@@ -12,7 +12,7 @@
  */
 package tech.pegasys.ethsigner;
 
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing.ChainIdProvider;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.ChainIdProvider;
 
 import java.net.InetAddress;
 import java.nio.file.Path;

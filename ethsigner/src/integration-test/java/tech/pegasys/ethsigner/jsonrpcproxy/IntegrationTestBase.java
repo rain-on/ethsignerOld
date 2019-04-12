@@ -17,6 +17,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.matchers.Times.exactly;
 import static org.mockserver.model.HttpRequest.request;
@@ -31,14 +35,15 @@ import tech.pegasys.ethsigner.jsonrpcproxy.model.request.EthSignerRequest;
 import tech.pegasys.ethsigner.jsonrpcproxy.model.response.EthNodeResponse;
 import tech.pegasys.ethsigner.jsonrpcproxy.model.response.EthResponseFactory;
 import tech.pegasys.ethsigner.jsonrpcproxy.model.response.EthSignerResponse;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.RawTransactionConverter;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.TrackingNonceProvider;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing.ChainIdProvider;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing.ConfigurationChainId;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing.TransactionSigner;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.RawTransactionConverter;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.TrackingNonceProvider;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.ChainIdProvider;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.ConfigurationChainId;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.TransactionSigner;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.nio.file.Files;
@@ -63,6 +68,8 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
+import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 
 public class IntegrationTestBase {
 
@@ -75,7 +82,7 @@ public class IntegrationTestBase {
   private static Runner runner;
   private static ClientAndServer clientAndServer;
 
-  private static JsonRpc2_0Web3j jsonRpc;
+  private JsonRpc2_0Web3j jsonRpc;
 
   protected final EthRequestFactory request = new EthRequestFactory();
   protected final EthResponseFactory response = new EthResponseFactory();
@@ -103,7 +110,16 @@ public class IntegrationTestBase {
     httpServerOptions.setPort(serverSocket.getLocalPort());
     httpServerOptions.setHost("localhost");
 
-    jsonRpc = new JsonRpc2_0Web3j(null, 2000, defaultExecutorService());
+    final Web3j web3j = mock(Web3j.class);
+    @SuppressWarnings("unchecked")
+    final Request<?, EthGetTransactionCount> rq =
+        (Request<String, EthGetTransactionCount>) mock(Request.class);
+    final EthGetTransactionCount ethGetTransactionCount = mock(EthGetTransactionCount.class);
+    when(ethGetTransactionCount.getTransactionCount()).thenReturn(BigInteger.ONE);
+
+    when(rq.send()).thenReturn(ethGetTransactionCount);
+    doReturn(rq).when(web3j).ethGetTransactionCount(any(), any());
+
     runner =
         new Runner(
             transactionSigner,
@@ -111,7 +127,7 @@ public class IntegrationTestBase {
             httpServerOptions,
             Duration.ofSeconds(5),
             new RawTransactionConverter(
-                new TrackingNonceProvider(jsonRpc, transactionSigner.getAddress())));
+                new TrackingNonceProvider(web3j, transactionSigner.getAddress())));
     runner.start();
 
     LOG.info(
@@ -133,6 +149,7 @@ public class IntegrationTestBase {
 
   @Before
   public void setup() {
+    jsonRpc = new JsonRpc2_0Web3j(null, 2000, defaultExecutorService());
     clientAndServer.reset();
   }
 

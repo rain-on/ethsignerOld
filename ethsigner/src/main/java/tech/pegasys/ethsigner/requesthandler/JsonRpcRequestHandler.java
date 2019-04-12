@@ -10,12 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction;
+package tech.pegasys.ethsigner.requesthandler;
 
-import java.io.IOException;
-import java.math.BigInteger;
+import tech.pegasys.ethsigner.jsonrpc.JsonRpcRequest;
 
-public interface NonceProvider {
+import io.vertx.core.http.HttpServerRequest;
 
-  BigInteger getNonce() throws IOException;
+@FunctionalInterface
+public interface JsonRpcRequestHandler {
+
+  void handle(HttpServerRequest httpServerRequest, JsonRpcRequest rpcRequest);
 }

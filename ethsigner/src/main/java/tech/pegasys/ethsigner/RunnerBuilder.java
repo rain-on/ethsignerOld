@@ -12,8 +12,8 @@
  */
 package tech.pegasys.ethsigner;
 
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.RawTransactionConverter;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing.TransactionSigner;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.RawTransactionConverter;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.TransactionSigner;
 
 import java.time.Duration;
 

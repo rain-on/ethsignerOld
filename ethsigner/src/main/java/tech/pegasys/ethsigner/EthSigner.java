@@ -12,11 +12,11 @@
  */
 package tech.pegasys.ethsigner;
 
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.NonceProvider;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.RawTransactionConverter;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.TrackingNonceProvider;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing.ChainIdProvider;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing.TransactionSigner;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.NonceProvider;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.RawTransactionConverter;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.TrackingNonceProvider;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.ChainIdProvider;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.TransactionSigner;
 
 import java.io.File;
 import java.io.IOException;

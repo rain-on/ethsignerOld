@@ -10,18 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing;
+package tech.pegasys.ethsigner.requesthandler.sendtransaction;
 
-public class ConfigurationChainId implements ChainIdProvider {
+import java.io.IOException;
+import java.math.BigInteger;
 
-  private final long id;
+public interface NonceProvider {
 
-  public ConfigurationChainId(final long id) {
-    this.id = id;
-  }
-
-  @Override
-  public long id() {
-    return id;
-  }
+  BigInteger getNonce() throws IOException;
 }

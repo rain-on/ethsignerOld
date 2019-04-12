@@ -12,16 +12,16 @@
  */
 package tech.pegasys.ethsigner;
 
-import tech.pegasys.ethsigner.jsonrpcproxy.HttpResponseFactory;
-import tech.pegasys.ethsigner.jsonrpcproxy.JsonRpcErrorReporter;
-import tech.pegasys.ethsigner.jsonrpcproxy.JsonRpcHttpService;
-import tech.pegasys.ethsigner.jsonrpcproxy.RequestMapper;
-import tech.pegasys.ethsigner.jsonrpcproxy.internalresponse.EthAccountsBodyProvider;
-import tech.pegasys.ethsigner.jsonrpcproxy.internalresponse.InternalResponseHandler;
-import tech.pegasys.ethsigner.jsonrpcproxy.passthrough.PassThroughHandler;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.RawTransactionConverter;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.SendTransactionHandler;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing.TransactionSigner;
+import tech.pegasys.ethsigner.requesthandler.HttpResponseFactory;
+import tech.pegasys.ethsigner.requesthandler.JsonRpcErrorReporter;
+import tech.pegasys.ethsigner.requesthandler.JsonRpcHttpService;
+import tech.pegasys.ethsigner.requesthandler.RequestMapper;
+import tech.pegasys.ethsigner.requesthandler.internalresponse.EthAccountsBodyProvider;
+import tech.pegasys.ethsigner.requesthandler.internalresponse.InternalResponseHandler;
+import tech.pegasys.ethsigner.requesthandler.passthrough.PassThroughHandler;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.RawTransactionConverter;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.SendTransactionHandler;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.TransactionSigner;
 
 import java.time.Duration;
 

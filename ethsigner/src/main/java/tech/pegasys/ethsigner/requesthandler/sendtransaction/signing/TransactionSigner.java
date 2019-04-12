@@ -10,9 +10,9 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing;
+package tech.pegasys.ethsigner.requesthandler.sendtransaction.signing;
 
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing.web3j.TransactionEncoder;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.web3j.TransactionEncoder;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;

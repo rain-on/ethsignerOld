@@ -12,7 +12,6 @@
  */
 package tech.pegasys.ethsigner.jsonrpcproxy;
 
-import static tech.pegasys.ethsigner.jsonrpc.response.JsonRpcError.INTERNAL_ERROR;
 import static tech.pegasys.ethsigner.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 
 import tech.pegasys.ethsigner.jsonrpcproxy.model.jsonrpc.SendRawTransaction;
@@ -53,9 +52,18 @@ public class SigningSendTransactionIntegrationTest extends IntegrationTestBase {
   }
 
   @Test
-  public void internalErrorResponseWhenMissingNonce() {
+  public void missingNonceResultsInEthNodeRespondingSuccessfully() {
+    final String ethNodeResponseBody = "VALID_RESPONSE";
+    final String responseBody =
+        sendRawTransaction.request(
+            "0xf892018609184e72a0008276c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d"
+                + "46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f07244567535"
+                + "a05b2b6e380da44241ecd30b21bd56f05da80e217a6347dfe06b0fb00b2e4adc14a048c4f0255bdb552"
+                + "6171b0a771e61b9f44b3c3fca2feffae04d1748297726ca0f");
+    setUpEthNodeResponse(request.ethNode(responseBody), response.ethNode(ethNodeResponseBody));
+
     sendRequestThenVerifyResponse(
-        request.ethSigner(sendTransaction.missingNonce()), response.ethSigner(INTERNAL_ERROR));
+        request.ethSigner(sendTransaction.missingNonce()), response.ethSigner(ethNodeResponseBody));
   }
 
   @Test

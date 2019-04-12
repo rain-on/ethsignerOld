@@ -12,8 +12,8 @@
  */
 package tech.pegasys.ethsigner;
 
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing.ChainIdProvider;
-import tech.pegasys.ethsigner.jsonrpcproxy.sendtransaction.signing.ConfigurationChainId;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.ChainIdProvider;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.ConfigurationChainId;
 
 import java.io.PrintStream;
 import java.net.InetAddress;

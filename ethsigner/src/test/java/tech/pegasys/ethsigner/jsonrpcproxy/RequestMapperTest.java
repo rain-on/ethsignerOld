@@ -14,6 +14,9 @@ package tech.pegasys.ethsigner.jsonrpcproxy;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
+import tech.pegasys.ethsigner.requesthandler.JsonRpcRequestHandler;
+import tech.pegasys.ethsigner.requesthandler.RequestMapper;
+
 import com.google.common.collect.ImmutableMap;
 import io.vertx.core.json.JsonObject;
 import org.junit.Test;
