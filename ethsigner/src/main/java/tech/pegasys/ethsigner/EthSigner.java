@@ -14,7 +14,7 @@ package tech.pegasys.ethsigner;
 
 import tech.pegasys.ethsigner.requesthandler.sendtransaction.NonceProvider;
 import tech.pegasys.ethsigner.requesthandler.sendtransaction.RawTransactionConverter;
-import tech.pegasys.ethsigner.requesthandler.sendtransaction.TrackingNonceProvider;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.Web3jNonceProvider;
 import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.ChainIdProvider;
 import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.TransactionSigner;
 
@@ -80,7 +80,7 @@ public final class EthSigner {
                       + config.getDownstreamHttpPort()));
       final TransactionSigner signer =
           transactionSigner(config.getKeyPath().toFile(), password.get(), config.getChainId());
-      final NonceProvider nonceProvider = new TrackingNonceProvider(web3j, signer.getAddress());
+      final NonceProvider nonceProvider = new Web3jNonceProvider(web3j, signer.getAddress());
 
       runnerBuilder
           .setTransactionSigner(signer)

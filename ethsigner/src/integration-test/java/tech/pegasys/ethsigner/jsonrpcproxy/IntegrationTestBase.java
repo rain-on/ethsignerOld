@@ -36,7 +36,7 @@ import tech.pegasys.ethsigner.jsonrpcproxy.model.response.EthNodeResponse;
 import tech.pegasys.ethsigner.jsonrpcproxy.model.response.EthResponseFactory;
 import tech.pegasys.ethsigner.jsonrpcproxy.model.response.EthSignerResponse;
 import tech.pegasys.ethsigner.requesthandler.sendtransaction.RawTransactionConverter;
-import tech.pegasys.ethsigner.requesthandler.sendtransaction.TrackingNonceProvider;
+import tech.pegasys.ethsigner.requesthandler.sendtransaction.Web3jNonceProvider;
 import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.ChainIdProvider;
 import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.ConfigurationChainId;
 import tech.pegasys.ethsigner.requesthandler.sendtransaction.signing.TransactionSigner;
@@ -116,7 +116,6 @@ public class IntegrationTestBase {
         (Request<String, EthGetTransactionCount>) mock(Request.class);
     final EthGetTransactionCount ethGetTransactionCount = mock(EthGetTransactionCount.class);
     when(ethGetTransactionCount.getTransactionCount()).thenReturn(BigInteger.ONE);
-
     when(rq.send()).thenReturn(ethGetTransactionCount);
     doReturn(rq).when(web3j).ethGetTransactionCount(any(), any());
 
@@ -127,7 +126,7 @@ public class IntegrationTestBase {
             httpServerOptions,
             Duration.ofSeconds(5),
             new RawTransactionConverter(
-                new TrackingNonceProvider(web3j, transactionSigner.getAddress())));
+                new Web3jNonceProvider(web3j, transactionSigner.getAddress())));
     runner.start();
 
     LOG.info(

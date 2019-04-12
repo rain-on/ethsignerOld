@@ -22,21 +22,21 @@ import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 
-public class TrackingNonceProvider implements NonceProvider {
+public class Web3jNonceProvider implements NonceProvider {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TrackingNonceProvider.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Web3jNonceProvider.class);
 
   private final Web3j web3j;
   private final String accountAddress;
 
-  public TrackingNonceProvider(final Web3j web3j, final String accountAddress) {
+  public Web3jNonceProvider(final Web3j web3j, final String accountAddress) {
     this.web3j = web3j;
     this.accountAddress = accountAddress;
   }
 
   @Override
   public BigInteger getNonce() throws IOException {
-    return getNonceFromClient();
+    return getNonceFromClient().add(BigInteger.ONE);
   }
 
   private BigInteger getNonceFromClient() throws IOException {
